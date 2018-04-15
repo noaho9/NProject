@@ -26,6 +26,9 @@ def get_ip():
     
     
 
+    # return Response(json.dumps({'Output': 'Hello Get All World'}), mimetype='application/json', status=200)
+
+
 @application.route('/', methods=['POST'])
 def post():
     return Response(json.dumps({'Output': 'Hello Post World in cloud 9'}), mimetype='application/json', status=200)

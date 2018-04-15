@@ -12,4 +12,4 @@ def test_response(client):
     assert result.status_code == 200
     assert result.headers['Content-Type'] == 'application/json'
     #changed the string to be the same in the application.py
-    assert response_body['Output'] == 'Hello Get World'
+    assert response_body['Output'] == 'Hello Get All World'
