@@ -1,4 +1,4 @@
-Metadata-Version: 2.0
+Metadata-Version: 2.1
 Name: itsdangerous
 Version: 0.24
 Summary: Various helpers to pass trusted data to untrusted environments and back.
