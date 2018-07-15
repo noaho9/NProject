@@ -104,11 +104,16 @@ def analyze(bucket='foodcal', image='dinner1'):
     
     
 def detect_labels(bucket, key, max_labels=10, min_confidence=50, region="us-east-2"):
+    ####
+    print('at begginingbucket name: {}, key: {}'.format(bucket, key))
     rekognition = boto3.client("rekognition", region)
+    print('after recog')
     s3 = boto3.resource('s3', region_name = 'us-east-2')
     image = s3.Object(bucket, key) # Get an Image from S3
+    print('bucket name: {}, key: {}'.format(bucket, key))
     img_data = image.get()['Body'].read() # Read the image
-
+    if not img_data:
+        print('no image data')
     response = rekognition.detect_labels(
         Image={
             'Bytes': img_data
@@ -155,7 +160,7 @@ def get_ip_meta():
     return res
 
 
-@application.route('/upload', methods=['GET','POST'])
+@application.route('/upload', methods=['GET','POST', 'PUT'])
 def upload_s3():
     print('in function')
     bucket = 'foodcal'
