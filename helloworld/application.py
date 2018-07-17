@@ -11,11 +11,11 @@ from boto3.dynamodb.conditions import Key
 from helloworld.setmetadata import db_set_item, inc_page_by
 from werkzeug.utils import secure_filename
 import datetime
-from app import app
+#from app import app
 
 application = Flask(__name__, template_folder='templates')
 
-@app.route('/index')
+@application.route('/index')
 def index():
    user = {'username': 'Miguel'}
    return render_template('index.html', title='Home', user=user)
