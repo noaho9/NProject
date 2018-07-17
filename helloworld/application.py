@@ -6,15 +6,15 @@ from flask import Flask, Response, render_template, request
 from helloworld.flaskrun import flaskrun
 import requests
 import boto3 
-sys.path.append('../.venv/include/python3.6')
+#sys.path.append('../.venv/include/python3.6')
 from boto3.dynamodb.conditions import Key
 from helloworld.setmetadata import db_set_item, inc_page_by
 from werkzeug.utils import secure_filename
 import datetime
-
+from app import app
 
 application = Flask(__name__, template_folder='templates')
-from app import app
+
 @app.route('/index')
 def index():
    user = {'username': 'Miguel'}
