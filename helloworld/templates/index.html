@@ -1,23 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title></title>
-</head>
-<body>
-
-    <h1>Upload Files</h1>
-
-    <form action="/upload" method="POST" enctype="multipart/form-data">
-
-        <label for="user_file">Upload Your File</label>
-        <br></br>
-        <input type="file" name="user_file">
-        <br></br>
-        <button type="submit">Upload</button>
-
-    </form>
-
-</body>
-
+<html>
+        <head>
+            <title>mylogger - {{ title }}</title>
+        </head>
+        <body>
+            <p>number of items: {{ counter }}</p>
+            <ul>
+            {% for item in response %}
+                <li>{{ item|safe }}</li>
+            {% endfor %}
+            </ul>
+            
+        </body>
 </html>

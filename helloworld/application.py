@@ -19,7 +19,7 @@ application = Flask(__name__, template_folder='templates')
 def index():
    user = {'username': 'Miguel'}
    return render_template('index.html', title='Home', user=user)
-   
+ 
 
 
 @application.route('/', methods=['GET'])
@@ -169,11 +169,11 @@ def get_ip_meta():
     return res
 
 
-@application.route('/upload', methods=['GET','POST'])
+@application.route('/upload', methods=['GET','POST', 'PUT'])
 def upload_s3():
-    
-    bucket = 'loggereast1'
-    file_name = 'temp.txt'
+    print('in function')
+    bucket = 'foodcal'
+    # file_name = 'temp.jpg'
     time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     # if get show page for upload
     if request.method == 'GET':
@@ -181,9 +181,19 @@ def upload_s3():
 
     s3 = boto3.resource('s3', region_name = 'us-east-2')
     if request.files:
+        print('in files')
         file = request.files['user_file']
         file_name = secure_filename(file.filename) + time
-        s3.Bucket(bucket).put_object(Key=file_name, Body=file)
+        print('file name {}'.format(file_name))
+        #s3 = boto3.resource('s3')
+        #object = s3.Object('bucket', Key=file_name)
+        #object.put(Body=file)
+        # my_s3 = s3.Bucket(bucket)
+        # my_s3.put_object(Key=file_name, Body=file)
+        client = boto3.client('s3')
+        client.put_object(Body=file, Bucket=bucket, Key=file_name)
+        
+        print('add object: {}'.format(file_name))
     else:  
         response = request.get_json() 
         print(response)
@@ -191,10 +201,12 @@ def upload_s3():
         file_name = response['file_name'] + time # whatever name
         country = response['country']
         data = json.dumps(response)
+        print(data)
         # to create a file the obdy needs to be of type bytes, hence the data.encode
         s3.Bucket(bucket).put_object(Key=file_name, Body=data.encode('utf-8'))
+        print('after data load s3')
 
-return Response(detect_labels(bucket, file_name), mimetype='application/json', status=200)
+    return Response(detect_labels(bucket, file_name), mimetype='application/json', status=200)
     
     
     
