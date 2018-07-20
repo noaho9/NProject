@@ -6,21 +6,12 @@ from flask import Flask, Response, render_template, request
 from helloworld.flaskrun import flaskrun
 import requests
 import boto3 
-sys.path.append('../.venv/include/python3.6m')
 from boto3.dynamodb.conditions import Key
 from helloworld.setmetadata import db_set_item, inc_page_by
-from werkzeug.utils import secure_filename
 import datetime
-#from app import app
+from werkzeug.utils import secure_filename
 
 application = Flask(__name__, template_folder='templates')
-
-@application.route('/index')
-def index():
-   user = {'username': 'Miguel'}
-   return render_template('index.html', title='Home', user=user)
- 
-
 
 @application.route('/', methods=['GET'])
 def get():
@@ -41,16 +32,60 @@ def get_temp(site):
     post_data = request.get_json()
     # build request data
     Item = build_request_data(site, post_data, response)
-    db_set_item('eb_try_logger', Item)
+    db_set_item('food', Item)
     # inc_page_by(response['country'], site)
     
     return Response(json.dumps(Item), mimetype='application/json', status=200)
 
+@application.route('/iter/<bucket>', methods=['GET'])
+def iterate_bucket_items(bucket):
+    # the result of the authentication
+    result = {'is_auth':'false'}
+    
+    s3 = boto3.resource('s3', region_name = 'us-east-2')
+    my_bucket = s3.Bucket(bucket)
+    for obj in my_bucket.objects.all():
+        print('do your compare here, send the obj.key and bucket name to the compare')
+        print(obj.key)
+
+    return Response(json.dumps(result), mimetype='application/json', status=200)
+
+
+
+@application.route('/upload', methods=['GET','POST'])
+def upload_s3():
+    
+    bucket = 'NProject'
+    file_name = 'temp.txt'
+    time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # if get show page for upload
+    if request.method == 'GET':
+        return render_template('upload.html')
+
+    s3 = boto3.resource('s3', region_name = 'us-east-2')
+    if request.files:
+        file = request.files['user_file']
+        file_name = secure_filename(file.filename) + time
+        s3.Bucket(bucket).put_object(Key=file_name, Body=file)
+    else:  
+        response = request.get_json() 
+        print(response)
+        bucket = response['bucket'] # 'loggereast1'
+        file_name = response['file_name'] + time # whatever name
+        country = response['country']
+        data = json.dumps(response)
+        # to create a file the obdy needs to be of type bytes, hence the data.encode
+        s3.Bucket(bucket).put_object(Key=file_name, Body=data.encode('utf-8'))
+
+    return Response(detect_labels(bucket, file_name), mimetype='application/json', status=200)
+    #return Response(json.dumps({'uploaded': file_name }), mimetype='application/json', status=200)
+
+    
 @application.route('/bi', methods=['GET'])
 def get_bi():
     my_ses = boto3.Session(region_name = 'us-east-2')
     dynamodb = my_ses.resource('dynamodb')
-    table = dynamodb.Table('eb_try_logger')
+    table = dynamodb.Table('food')
     resp = table.scan()
     for item in resp['Items']:
         print(item)
@@ -62,7 +97,7 @@ def get_bi():
 def get_bi_site(db_key, db_value):
     my_ses = boto3.Session(region_name = 'us-east-2')
     dynamodb = my_ses.resource('dynamodb')
-    table = dynamodb.Table('eb_try_logger')
+    table = dynamodb.Table('food')
     if db_key and db_value:
         resp = table.scan(FilterExpression=Key(db_key).eq(db_value))
     else:
@@ -84,45 +119,24 @@ def get_bi_site(db_key, db_value):
     return render_template('index.html', response=resp['Items'], counter=obj_len, title='bi')
 
 
-@application.route('/bi/graph')
-def showgraph():
-    data_provider = [
-        {
-            'category': 'אתר 1',
-            'column-1': 8
-
-        },
-        {
-            "category": "אתר 2",
-            "column-1": 6
-        },
-        {
-            "category": "אתר 3",
-            "column-1": 2
-        }
-    ]
-    return render_template('bi_graph.html', data=data_provider, chart_title='מה המצב אחי')
 
 @application.route('/', methods=['POST'])
 def post():
     return Response(json.dumps({'Output': 'Hello World'}), mimetype='application/json', status=200)
 
+
 @application.route('/analyze/<bucket>/<image>', methods=['GET'])
-def analyze(bucket='foodcal', image='dinner1'):
+def analyze(bucket='food', image='dinner1'):
     return detect_labels(bucket, image)
     
     
 def detect_labels(bucket, key, max_labels=10, min_confidence=50, region="us-east-2"):
-    ####
-    print('at begginingbucket name: {}, key: {}'.format(bucket, key))
     rekognition = boto3.client("rekognition", region)
-    print('after recog')
     s3 = boto3.resource('s3', region_name = 'us-east-2')
+    
     image = s3.Object(bucket, key) # Get an Image from S3
-    print('bucket name: {}, key: {}'.format(bucket, key))
     img_data = image.get()['Body'].read() # Read the image
-    if not img_data:
-        print('no image data')
+
     response = rekognition.detect_labels(
         Image={
             'Bytes': img_data
@@ -146,6 +160,32 @@ def detect_labels(bucket, key, max_labels=10, min_confidence=50, region="us-east
 	)
 	'''
 
+@application.route('/comp_face/<source_image>/<target_image>', methods=['GET'])
+def compare_face(source_image, target_image):
+    # change region and bucket accordingly
+    region = 'us-east-2'
+    bucket_name = 'your bucket name'
+	
+    rekognition = boto3.client("rekognition", region)
+    response = rekognition.compare_faces(
+        SourceImage={
+    		"S3Object": {
+    			"Bucket": bucket_name,
+    			"Name":source_image,
+    		}
+    	},
+    	TargetImage={
+    		"S3Object": {
+    			"Bucket": bucket_name,
+    			"Name": target_image,
+    		}
+    	},
+		# play with the minimum level of similarity
+        SimilarityThreshold=50,
+    )
+    # return 0 if below similarity threshold
+    return json.dumps(response['FaceMatches'] if response['FaceMatches'] != [] else [{"Similarity": 0.0}])
+
 def options():
     my_list = ["one", "two"]
     #my_dict = {'a' : 'addd','b' : 'dddd','c' :'llll'}
@@ -168,48 +208,6 @@ def get_ip_meta():
         
     return res
 
-
-@application.route('/upload', methods=['GET','POST', 'PUT'])
-def upload_s3():
-    print('in function')
-    bucket = 'foodcal'
-    # file_name = 'temp.jpg'
-    time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    # if get show page for upload
-    if request.method == 'GET':
-        return render_template('upload.html')
-
-    s3 = boto3.resource('s3', region_name = 'us-east-2')
-    if request.files:
-        print('in files')
-        file = request.files['user_file']
-        file_name = secure_filename(file.filename) + time
-        print('file name {}'.format(file_name))
-        #s3 = boto3.resource('s3')
-        #object = s3.Object('bucket', Key=file_name)
-        #object.put(Body=file)
-        # my_s3 = s3.Bucket(bucket)
-        # my_s3.put_object(Key=file_name, Body=file)
-        client = boto3.client('s3')
-        client.put_object(Body=file, Bucket=bucket, Key=file_name)
-        
-        print('add object: {}'.format(file_name))
-    else:  
-        response = request.get_json() 
-        print(response)
-        bucket = response['bucket'] # 'loggereast1'
-        file_name = response['file_name'] + time # whatever name
-        country = response['country']
-        data = json.dumps(response)
-        print(data)
-        # to create a file the obdy needs to be of type bytes, hence the data.encode
-        s3.Bucket(bucket).put_object(Key=file_name, Body=data.encode('utf-8'))
-        print('after data load s3')
-
-    return Response(detect_labels(bucket, file_name), mimetype='application/json', status=200)
-    
-    
-    
 # build item for logger
 # site is in the url
 # post data contains the page in the site 
