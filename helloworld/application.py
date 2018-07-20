@@ -55,7 +55,7 @@ def iterate_bucket_items(bucket):
 @application.route('/upload', methods=['GET','POST'])
 def upload_s3():
     
-    bucket = 'NProject'
+    bucket = 'foodcal'
     file_name = 'temp.txt'
     time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     # if get show page for upload
