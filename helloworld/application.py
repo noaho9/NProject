@@ -68,17 +68,24 @@ def upload_s3():
         file_name = secure_filename(file.filename) + time
         s3.Bucket(bucket).put_object(Key=file_name, Body=file)
     else:  
-        response = request.get_json() 
+        response = request.get_json()
         print(response)
         bucket = response['bucket'] # 'loggereast1'
         file_name = response['file_name'] + time # whatever name
         country = response['country']
         data = json.dumps(response)
+        #-------------------------------------------
+        arrayData = json.loads(data)
+        food_list = arrayData['Name']
+        #for a in arrayData:
+            #print(a,arrayData[a])
         # to create a file the obdy needs to be of type bytes, hence the data.encode
+        for distro in food_list:
+            print(distro["Name"])
         s3.Bucket(bucket).put_object(Key=file_name, Body=data.encode('utf-8'))
-
+    # replace detect labels with another function that reads the json prop and return array
     return Response(detect_labels(bucket, file_name), mimetype='application/json', status=200)
-    #return Response(json.dumps({'uploaded': file_name }), mimetype='application/json', status=200)
+    #return Response(JSON.parse(response), mimetype='application/json', status=200)
 
     
 @application.route('/bi', methods=['GET'])
@@ -225,6 +232,8 @@ def build_request_data(site, post_data, response):
     }
     
     return Item
+
+#convert json to array
 
 
 if __name__ == '__main__':
