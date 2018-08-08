@@ -11,6 +11,5 @@ artifacts:
   files:
     - '.ebextensions/**/*'
     - 'helloworld/**/*.py'
-    - 'helloworld/templates/*.html'
     - 'requirements.txt'
     - 'setup.py'

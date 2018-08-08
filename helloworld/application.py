@@ -6,11 +6,20 @@ from flask import Flask, Response, render_template, request
 from helloworld.flaskrun import flaskrun
 import requests
 import boto3 
+import decimal
+
 from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Attr
 from helloworld.setmetadata import db_set_item, inc_page_by
 import datetime
 from werkzeug.utils import secure_filename
 
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, decimal.Decimal):
+            return str(o)
+        return super(DecimalEncoder, self).default(o)
+        
 application = Flask(__name__, template_folder='templates')
 
 @application.route('/', methods=['GET'])
@@ -85,9 +94,13 @@ def upload_s3():
         s3.Bucket(bucket).put_object(Key=file_name, Body=data.encode('utf-8'))
     # replace detect labels with another function that reads the json prop and return array
     result = detect_labels(bucket, file_name);
-    #return render_template('scrap.html', result=result)
+    result = json.loads(result)
+    
+    result = filter_labels_from_db(result)
+    
+    return render_template('scrap.html', result=result)
 
-    return Response(result, mimetype='application/json', status=200)
+    #return Response(result, mimetype='application/json', status=200)
     #return Response(JSON.parse(response), mimetype='application/json', status=200)
 
     
@@ -139,6 +152,21 @@ def post():
 def analyze(bucket='food', image='dinner1'):
     return detect_labels(bucket, image)
     
+def filter_labels_from_db(items, region="us-east-2"):
+    items_list = list()
+    for x in items:
+        items_list.append(x['Name']);
+    my_ses = boto3.Session(region_name = 'us-east-2')
+    dynamodb = my_ses.resource('dynamodb')
+    table = dynamodb.Table('food_new')
+
+    response = table.query(
+        KeyConditionExpression=Key('item_type').eq('food'),
+        FilterExpression=Attr('item_key').is_in(items_list)
+    )
+    
+    #print(response[u'Items'])
+    return response[u'Items']
     
 def detect_labels(bucket, key, max_labels=10, min_confidence=50, region="us-east-2"):
     rekognition = boto3.client("rekognition", region)
