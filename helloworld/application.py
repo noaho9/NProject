@@ -84,7 +84,10 @@ def upload_s3():
             print(distro["Name"])
         s3.Bucket(bucket).put_object(Key=file_name, Body=data.encode('utf-8'))
     # replace detect labels with another function that reads the json prop and return array
-    return Response(detect_labels(bucket, file_name), mimetype='application/json', status=200)
+    result = detect_labels(bucket, file_name);
+    return render_template('scrap.html', result=result)
+
+    #return Response(result, mimetype='application/json', status=200)
     #return Response(JSON.parse(response), mimetype='application/json', status=200)
 
     

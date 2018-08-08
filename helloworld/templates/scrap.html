@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+
+  <h1>Scrapped Records:</h1>
+  <ul id="navigation">
+  {% for item in result %}
+      <li><a href="{{ item.Name }}">{{ item.Name }}</a></li>
+  {% endfor %}
+  </ul>
+
+</body>
+
+</html>
