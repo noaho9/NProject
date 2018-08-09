@@ -15,7 +15,7 @@
 			<tr>
 				<th>Item</th>
 				<th>Cal/g</th>
-				<th>Input Quautity</th>
+				<th>Input Quantity</th>
 				<th>Calories</th>
 			</tr>
 		</thead>
@@ -45,11 +45,59 @@
 		{% endfor %}
 			 
 		</tbody>
+		<tfoot>
+				<tr>
+				<td colspan="2"><strong> Total values: </strong></td> 
+				<td>
+					<div class="input-group">
+						<input class="form-control cal_total_gm" type="number"   aria-describedby="basic-addon1" />
+						<div class="input-group-append">
+							<span class="input-group-text" id="basic-addon1">g</span>
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="input-group">
+						<input class="form-control cal_total_cl" type="number"  readonly  aria-describedby="basic-addon2"> 
+						<div class="input-group-append">
+							<span class="input-group-text" id="basic-addon2">calories</span>
+						</div>
+						
+					</div>
+				</td>
+			</tr> 
+			
+		</tfoot>
 	</table>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <script>
+
+	function calc_ttl(){
+		total_gm = 0 ;
+		jQuery('.cal_input').each(function(){
+			var inp_val = jQuery(this).val()
+			if(inp_val == '')
+				inp_val = 0;
+			inp_val = parseFloat(inp_val) 
+			total_gm += inp_val;
+		});
+			
+		
+		jQuery('.cal_total_gm').val( total_gm.toFixed(2) );
+		
+		total_cl = 0 ;
+		jQuery('.cal_output').each(function(){
+			var inp_val = jQuery(this).val()
+			if(inp_val == '')
+				inp_val = 0; 
+			inp_val = parseFloat(inp_val) 
+			total_cl += inp_val;
+		});
+			
+		jQuery('.cal_total_cl').val( total_cl.toFixed(2) );
+	}
 	jQuery(document).ready(function(){
 		jQuery('.my_item_tbl').each(function(){
 			var tbl = jQuery(this);
@@ -87,6 +135,7 @@
 			val_in = parseFloat(val_in);
 			var new_val = val_in * inp_val;
 			row.find('.cal_output').val(new_val.toFixed(2));
+			calc_ttl()
 		});
 	 
 	});
