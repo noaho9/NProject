@@ -1,18 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title></title>
+	<meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<title></title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.0/css/bootstrap.min.css" />
 </head>
 <body>
+<div class="container">
+<br />
+	<h4>Scrapped Records:</h4>
+	<table id="navigation" class="my_item_tbl table table-striped table-bordered table-hover">
+		<thead class="thead-light">
+			<tr>
+				<th>Item</th>
+				<th>Cal/g</th>
+				<th>Input Quautity</th>
+				<th>Calories</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for item in result %}
+			<tr>
+				<td><strong>{{ item.item_name }}</strong></td> 
+				<td><span data-cal="{{item.cal}}" class="item_val"></span></td>
+				<td>
+					<div class="input-group">
+						<input class="form-control cal_input" type="number"   aria-describedby="basic-addon1" />
+						<div class="input-group-append">
+							<span class="input-group-text" id="basic-addon1">g</span>
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="input-group">
+						<input class="form-control cal_output" type="number"  readonly  aria-describedby="basic-addon2"> 
+						<div class="input-group-append">
+							<span class="input-group-text" id="basic-addon2">calories</span>
+						</div>
+						
+					</div>
+				</td>
+			</tr> 
+		{% endfor %}
+			 
+		</tbody>
+	</table>
+</div>
 
-  <h1>Scrapped Records:</h1>
-  <ul id="navigation">
-  {% for item in result %}
-     <li>{{ item.item_name }} : {{item.cal}}</li>
-  {% endfor %}
-  </ul>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script>
+	jQuery(document).ready(function(){
+		jQuery('.my_item_tbl').each(function(){
+			var tbl = jQuery(this);
+				tbl.find('.item_val').each(function(){
+					var itm = jQuery(this);
+					
+					var item_cal = itm.attr('data-cal');
+					if(!item_cal){
+						itm.closest('tr').find('input').attr('disabled', 'disabled');
+						return;
+					}
+					
+					item_cal = parseFloat(item_cal);
+					if( Number.isNaN( item_cal ) ){
+					
+						itm.closest('tr').find('input').attr('disabled', 'disabled');
+						return
+					}
+					item_cal = item_cal / 100;
+					itm.html(item_cal);
+					itm.attr('data-val_1', item_cal);
+				})
+		});
+		
+	 
+		jQuery('.cal_input').keyup(function(){
+			var inp_val = jQuery(this).val()
+			inp_val = inp_val.replace(/[^0-9]/g, "");
+			if(inp_val == '')
+				inp_val = 1;
+			jQuery(this).val(inp_val);
+			inp_val = parseFloat(inp_val) 
+			var row = jQuery(this).closest('tr');
+			var val_in = row.find('.item_val').attr('data-val_1');
+			val_in = parseFloat(val_in);
+			var new_val = val_in * inp_val;
+			row.find('.cal_output').val(new_val.toFixed(2));
+		});
+	 
+	});
+</script>
 </body>
 
 </html>
